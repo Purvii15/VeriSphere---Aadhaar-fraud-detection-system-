@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+
+# Temp files
+temp_upload.jpg
+*.log
+
+# IDE
+.idea/
+.vscode/
+
+# Dataset (large)
+aadhaar_dataset/
+roboflow_dataset/
+
+# EasyOCR cache
+.EasyOCR/

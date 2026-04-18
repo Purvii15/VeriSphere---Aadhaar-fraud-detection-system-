@@ -1,0 +1,13 @@
+flask>=3.0.0
+ultralytics>=8.0.0
+easyocr>=1.7.0
+pyzbar>=0.1.9
+opencv-python>=4.8.0
+torch>=2.0.0
+torchvision>=0.15.0
+numpy>=1.24.0
+Pillow>=9.0.0
+scikit-image>=0.21.0
+imagecodecs>=2024.1.1
+zxing-cpp>=2.0.0
+qreader>=3.0.0
