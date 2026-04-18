@@ -18,7 +18,7 @@ from aadhaar_pipeline.tampering import load_tampering_model
 # Base directory = folder where flask_app.py lives
 BASE_DIR = Path(__file__).parent
 
-app = Flask(__name__, static_folder=str(BASE_DIR / "Templates" / "static"))
+app = Flask(__name__)
 
 # cache models at startup
 _yolo = None
@@ -33,24 +33,137 @@ def get_models():
     return _yolo, _resnet
 
 
+_MAIN_HTML = """<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>VeriSphere | Aadhaar Fraud Detection</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%238083ff' d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z'/%3E%3C/svg%3E"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --app-bg: #0b0c10;
+    --card-bg: rgba(28,31,41,0.4);
+    --border-glass: rgba(255,255,255,0.08);
+    --surface-container-highest: rgba(255,255,255,0.06);
+    --on-surface-variant: #c7c4d7;
+  }
+  * { box-sizing: border-box; }
+  body { background: var(--app-bg); color: #e0e2ef; font-family: 'Inter', sans-serif; min-height: 100vh; overflow-x: hidden; }
+  h1, h2, .font-black { font-family: 'Outfit', sans-serif !important; }
+  .glass-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--border-glass);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+  .text-on-surface-variant { color: var(--on-surface-variant); }
+  .bg-surface-container-highest { background: var(--surface-container-highest); }
+  .border-white\\/5 { border-color: rgba(255,255,255,0.05); }
+  .divide-y > * + * { border-top: 1px solid rgba(255,255,255,0.05); }
+  .stagger-load > * { animation: fadeUp 0.5s ease both; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+  .border-dashed { border: 2px dashed rgba(128,131,255,0.3); transition: border-color 0.2s; cursor: pointer; }
+  .border-dashed:hover { border-color: rgba(128,131,255,0.7); }
+  .bg-blob { position:fixed; filter:blur(120px); opacity:0.25; border-radius:50%; pointer-events:none; z-index:0; }
+</style>
+</head>
+<body>
+  <div class="bg-blob" style="top:-10%;left:-10%;width:500px;height:500px;background:rgba(87,27,193,0.5);"></div>
+  <div class="bg-blob" style="bottom:-10%;right:-10%;width:600px;height:600px;background:rgba(128,131,255,0.3);"></div>
+
+  <!-- Header -->
+  <header style="background:rgba(16,19,28,0.9);border-bottom:1px solid rgba(255,255,255,0.06);backdrop-filter:blur(12px);position:sticky;top:0;z-index:50;"
+          class="flex justify-between items-center px-6 py-4">
+    <span class="text-xl font-black" style="background:linear-gradient(to right,#8083ff,#571bc1);-webkit-background-clip:text;-webkit-text-fill-color:transparent">
+      🛡️ VeriSphere
+    </span>
+    <div class="flex gap-6">
+      <a href="/" class="text-sm font-semibold border-b-2 pb-1" style="color:#8083ff;border-color:#8083ff">Dashboard</a>
+      <a href="/qr-decode" class="text-sm font-medium text-on-surface-variant hover:text-white transition-colors">QR Decode</a>
+    </div>
+  </header>
+
+  <!-- Main layout -->
+  <main class="relative z-10 max-w-screen-xl mx-auto px-4 py-8 grid xl:grid-cols-12 gap-6">
+
+    <!-- Left column: upload -->
+    <div class="xl:col-span-5 flex flex-col gap-6">
+      <div>
+        <h1 class="text-3xl font-black tracking-tight mb-1">Aadhaar Fraud Detection</h1>
+        <p class="text-sm text-on-surface-variant">Upload an Aadhaar card image for multi-stage verification.</p>
+      </div>
+
+      <!-- Upload zone -->
+      <div class="glass-card rounded-xl p-6 flex flex-col gap-4">
+        <div class="border-dashed rounded-xl p-8 flex flex-col items-center justify-center gap-3 text-center" style="min-height:180px">
+          <span style="font-size:2.5rem">☁️</span>
+          <div>
+            <p class="font-semibold text-sm">Click or drag &amp; drop to upload</p>
+            <p class="text-xs text-on-surface-variant mt-1">JPG, PNG, WEBP supported</p>
+          </div>
+        </div>
+
+        <!-- Preview -->
+        <div class="aspect-[1.58/1] rounded-xl overflow-hidden relative bg-surface-container-highest flex items-center justify-center" style="min-height:160px">
+          <span class="text-on-surface-variant text-xs">No image selected</span>
+        </div>
+
+        <!-- Analyze button -->
+        <button disabled
+          class="w-full py-3 rounded-xl font-bold text-sm opacity-50 cursor-not-allowed bg-surface-container-highest text-on-surface-variant border border-white/5 transition-all">
+          🔍&nbsp;Analyze Card
+        </button>
+      </div>
+
+      <!-- Info card -->
+      <div class="glass-card rounded-xl p-5">
+        <h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-3">Verification Pipeline</h3>
+        <div class="space-y-2 text-xs text-on-surface-variant">
+          <div class="flex items-center gap-2"><span style="color:#8083ff">①</span> YOLOv8 region detection</div>
+          <div class="flex items-center gap-2"><span style="color:#34d399">②</span> EasyOCR text extraction</div>
+          <div class="flex items-center gap-2"><span style="color:#facc15">③</span> Verhoeff checksum validation</div>
+          <div class="flex items-center gap-2"><span style="color:#60a5fa">④</span> QR decode &amp; cross-check</div>
+          <div class="flex items-center gap-2"><span style="color:#f87171">⑤</span> SSIM photo matching</div>
+          <div class="flex items-center gap-2"><span style="color:#a78bfa">⑥</span> ELA + ResNet forensics</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right column: results -->
+    <div class="xl:col-span-7 flex flex-col">
+      <div class="glass-card rounded-xl flex-1 flex flex-col items-center justify-center p-12 text-center">
+        <div class="relative mb-8">
+          <div class="absolute inset-0 bg-[#8083ff]/10 blur-[60px] rounded-full"></div>
+          <span style="font-size:6rem;opacity:0.15">🛡️</span>
+        </div>
+        <h2 class="text-3xl font-black mb-4 tracking-tight">Ready to Analyse</h2>
+        <p class="text-on-surface-variant max-w-md mx-auto leading-relaxed">
+          Upload an Aadhaar card image and press <strong>Analyse Card</strong> to begin multi-stage verification.
+        </p>
+      </div>
+    </div>
+
+  </main>
+</body>
+</html>"""
+
+
 @app.route("/")
 def index():
-    # Use absolute path relative to this file
-    template_path = Path(__file__).parent / "Templates" / "stitch 1" / "code.html"
-    html = template_path.read_text(encoding="utf-8")
-    # inject icon fix CSS + JS glue before </body>
+    js = _get_glue_js()
     icon_css = """
 <style>
-/* Map material icon names to emoji when font fails to load */
 .material-symbols-outlined { font-family: 'Material Symbols Outlined', sans-serif; }
-.material-symbols-outlined:not([style*="font-size"]) { font-size: 1.25rem; }
-/* Fallback emoji map via data attributes */
 button.material-symbols-outlined, span.material-symbols-outlined {
   display: inline-flex; align-items: center; justify-content: center;
 }
 </style>
 <script>
-// Replace material icon text with emoji if font hasn't loaded after 1.5s
 document.addEventListener('DOMContentLoaded', function() {
   const emojiMap = {
     cloud_upload: '☁️', search: '🔍', shield_with_heart: '🛡️',
@@ -62,13 +175,12 @@ document.addEventListener('DOMContentLoaded', function() {
     zoom_in: '🔍', progress_activity: '⏳'
   };
   function checkAndReplace() {
-    // Test if font loaded by checking rendered width of a known icon
     const test = document.createElement('span');
     test.className = 'material-symbols-outlined';
     test.style.cssText = 'position:absolute;visibility:hidden;font-size:24px';
     test.textContent = 'home';
     document.body.appendChild(test);
-    const loaded = test.offsetWidth < 30; // icon glyph is narrow; text "home" is wide
+    const loaded = test.offsetWidth < 30;
     document.body.removeChild(test);
     if (!loaded) {
       document.querySelectorAll('.material-symbols-outlined').forEach(el => {
@@ -81,10 +193,9 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 """
-    html = html.replace("</head>", icon_css + "\n</head>")
-    js = _get_glue_js()
+    html = _MAIN_HTML.replace("</head>", icon_css + "\n</head>")
     html = html.replace("</body>", js + "\n</body>")
-    return html
+    return render_template_string(html)
 
 
 @app.route("/qr-decode")
