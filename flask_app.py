@@ -34,123 +34,336 @@ def get_models():
 
 
 _MAIN_HTML = """<!DOCTYPE html>
-<html class="dark" lang="en">
-<head>
+
+<html class="dark" lang="en"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>VeriSphere | Aadhaar Fraud Detection</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%238083ff' d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z'/%3E%3C/svg%3E"/>
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-surface-variant": "#c7c4d7",
+              "surface-dim": "#10131c",
+              "on-primary-container": "#0d0096",
+              "tertiary-container": "#707787",
+              "on-tertiary-fixed": "#151c29",
+              "tertiary-fixed": "#dce2f5",
+              "on-error-container": "#ffdad6",
+              "primary": "#c0c1ff",
+              "error": "#ffb4ab",
+              "primary-fixed-dim": "#c0c1ff",
+              "on-primary-fixed-variant": "#2f2ebe",
+              "on-error": "#690005",
+              "on-secondary-fixed-variant": "#5516be",
+              "secondary-fixed": "#e9ddff",
+              "tertiary-fixed-dim": "#c0c6d9",
+              "secondary": "#d0bcff",
+              "on-secondary": "#3c0091",
+              "surface-container-low": "#181b25",
+              "surface-container-high": "#272a34",
+              "secondary-container": "#571bc1",
+              "on-primary-fixed": "#07006c",
+              "tertiary": "#c0c6d9",
+              "surface-container-lowest": "#0b0e17",
+              "surface-bright": "#363943",
+              "primary-fixed": "#e1e0ff",
+              "outline": "#908fa0",
+              "on-secondary-fixed": "#23005c",
+              "on-secondary-container": "#c4abff",
+              "inverse-primary": "#494bd6",
+              "inverse-on-surface": "#2d303a",
+              "inverse-surface": "#e0e2ef",
+              "background": "#10131c",
+              "surface-container-highest": "#32343f",
+              "secondary-fixed-dim": "#d0bcff",
+              "on-surface": "#e0e2ef",
+              "on-primary": "#1000a9",
+              "error-container": "#93000a",
+              "on-tertiary-fixed-variant": "#404756",
+              "on-background": "#e0e2ef",
+              "outline-variant": "#464554",
+              "surface-variant": "#32343f",
+              "surface-tint": "#c0c1ff",
+              "on-tertiary": "#2a303f",
+              "on-tertiary-container": "#010511",
+              "surface-container": "#1c1f29",
+              "primary-container": "#8083ff",
+              "surface": "#10131c"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
 <style>
-  :root {
-    --app-bg: #0b0c10;
-    --card-bg: rgba(28,31,41,0.4);
-    --border-glass: rgba(255,255,255,0.08);
-    --surface-container-highest: rgba(255,255,255,0.06);
-    --on-surface-variant: #c7c4d7;
-  }
-  * { box-sizing: border-box; }
-  body { background: var(--app-bg); color: #e0e2ef; font-family: 'Inter', sans-serif; min-height: 100vh; overflow-x: hidden; }
-  h1, h2, .font-black { font-family: 'Outfit', sans-serif !important; }
-  .glass-card {
-    background: var(--card-bg);
-    backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
-    border: 1px solid var(--border-glass);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
-  }
-  .text-on-surface-variant { color: var(--on-surface-variant); }
-  .bg-surface-container-highest { background: var(--surface-container-highest); }
-  .border-white\\/5 { border-color: rgba(255,255,255,0.05); }
-  .divide-y > * + * { border-top: 1px solid rgba(255,255,255,0.05); }
-  .stagger-load > * { animation: fadeUp 0.5s ease both; }
-  @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
-  .border-dashed { border: 2px dashed rgba(128,131,255,0.3); transition: border-color 0.2s; cursor: pointer; }
-  .border-dashed:hover { border-color: rgba(128,131,255,0.7); }
-  .bg-blob { position:fixed; filter:blur(120px); opacity:0.25; border-radius:50%; pointer-events:none; z-index:0; }
-</style>
+      body {
+        background-color: #10131c;
+        color: #e0e2ef;
+        font-family: 'Inter', sans-serif;
+      }
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .glass-card {
+        background-color: #1c1f29;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        box-shadow: 0 0 40px rgba(99, 102, 241, 0.04);
+      }
+      .glow-border:focus-within {
+        border-color: #8083ff;
+        box-shadow: 0 0 15px rgba(128, 131, 255, 0.2);
+      }
+      /* Coming soon tooltip */
+      [data-soon] { position: relative; }
+      [data-soon]::after {
+        content: 'Coming soon';
+        position: absolute;
+        bottom: calc(100% + 6px);
+        left: 50%;
+        transform: translateX(-50%);
+        background: #1c1f29;
+        color: #c7c4d7;
+        font-size: 11px;
+        font-weight: 600;
+        white-space: nowrap;
+        padding: 4px 10px;
+        border-radius: 6px;
+        border: 1px solid rgba(255,255,255,0.08);
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.15s;
+        z-index: 100;
+      }
+      [data-soon]:hover::after { opacity: 1; }
+    </style>
 </head>
-<body>
-  <div class="bg-blob" style="top:-10%;left:-10%;width:500px;height:500px;background:rgba(87,27,193,0.5);"></div>
-  <div class="bg-blob" style="bottom:-10%;right:-10%;width:600px;height:600px;background:rgba(128,131,255,0.3);"></div>
-
-  <!-- Header -->
-  <header style="background:rgba(16,19,28,0.9);border-bottom:1px solid rgba(255,255,255,0.06);backdrop-filter:blur(12px);position:sticky;top:0;z-index:50;"
-          class="flex justify-between items-center px-6 py-4">
-    <span class="text-xl font-black" style="background:linear-gradient(to right,#8083ff,#571bc1);-webkit-background-clip:text;-webkit-text-fill-color:transparent">
-      🛡️ VeriSphere
-    </span>
-    <div class="flex gap-6">
-      <a href="/" class="text-sm font-semibold border-b-2 pb-1" style="color:#8083ff;border-color:#8083ff">Dashboard</a>
-      <a href="/qr-decode" class="text-sm font-medium text-on-surface-variant hover:text-white transition-colors">QR Decode</a>
-    </div>
-  </header>
-
-  <!-- Main layout -->
-  <main class="relative z-10 max-w-screen-xl mx-auto px-4 py-8 grid xl:grid-cols-12 gap-6">
-
-    <!-- Left column: upload -->
-    <div class="xl:col-span-5 flex flex-col gap-6">
-      <div>
-        <h1 class="text-3xl font-black tracking-tight mb-1">Aadhaar Fraud Detection</h1>
-        <p class="text-sm text-on-surface-variant">Upload an Aadhaar card image for multi-stage verification.</p>
-      </div>
-
-      <!-- Upload zone -->
-      <div class="glass-card rounded-xl p-6 flex flex-col gap-4">
-        <div class="border-dashed rounded-xl p-8 flex flex-col items-center justify-center gap-3 text-center" style="min-height:180px">
-          <span style="font-size:2.5rem">☁️</span>
-          <div>
-            <p class="font-semibold text-sm">Click or drag &amp; drop to upload</p>
-            <p class="text-xs text-on-surface-variant mt-1">JPG, PNG, WEBP supported</p>
-          </div>
-        </div>
-
-        <!-- Preview -->
-        <div class="aspect-[1.58/1] rounded-xl overflow-hidden relative bg-surface-container-highest flex items-center justify-center" style="min-height:160px">
-          <span class="text-on-surface-variant text-xs">No image selected</span>
-        </div>
-
-        <!-- Analyze button -->
-        <button disabled
-          class="w-full py-3 rounded-xl font-bold text-sm opacity-50 cursor-not-allowed bg-surface-container-highest text-on-surface-variant border border-white/5 transition-all">
-          🔍&nbsp;Analyze Card
-        </button>
-      </div>
-
-      <!-- Info card -->
-      <div class="glass-card rounded-xl p-5">
-        <h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-3">Verification Pipeline</h3>
-        <div class="space-y-2 text-xs text-on-surface-variant">
-          <div class="flex items-center gap-2"><span style="color:#8083ff">①</span> YOLOv8 region detection</div>
-          <div class="flex items-center gap-2"><span style="color:#34d399">②</span> EasyOCR text extraction</div>
-          <div class="flex items-center gap-2"><span style="color:#facc15">③</span> Verhoeff checksum validation</div>
-          <div class="flex items-center gap-2"><span style="color:#60a5fa">④</span> QR decode &amp; cross-check</div>
-          <div class="flex items-center gap-2"><span style="color:#f87171">⑤</span> SSIM photo matching</div>
-          <div class="flex items-center gap-2"><span style="color:#a78bfa">⑥</span> ELA + ResNet forensics</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Right column: results -->
-    <div class="xl:col-span-7 flex flex-col">
-      <div class="glass-card rounded-xl flex-1 flex flex-col items-center justify-center p-12 text-center">
-        <div class="relative mb-8">
-          <div class="absolute inset-0 bg-[#8083ff]/10 blur-[60px] rounded-full"></div>
-          <span style="font-size:6rem;opacity:0.15">🛡️</span>
-        </div>
-        <h2 class="text-3xl font-black mb-4 tracking-tight">Ready to Analyse</h2>
-        <p class="text-on-surface-variant max-w-md mx-auto leading-relaxed">
-          Upload an Aadhaar card image and press <strong>Analyse Card</strong> to begin multi-stage verification.
-        </p>
-      </div>
-    </div>
-
-  </main>
-</body>
-</html>"""
+<body class="antialiased" style="overflow:hidden;height:100vh;display:flex;flex-direction:column;">
+<!-- TopNavBar -->
+<header class="bg-[#10131c] dark:bg-[#10131c] docked full-width top-0 z-50 flex justify-between items-center w-full px-6 py-4 border-b border-white/[0.06] shadow-[0_0_40px_rgba(99,102,241,0.08)] font-['Inter'] antialiased tracking-tight">
+<div class="flex items-center gap-4">
+<span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#8083ff] to-[#571bc1]">VeriSphere</span>
+</div>
+<div class="hidden md:flex items-center gap-8">
+<a class="text-[#8083ff] border-b-2 border-[#8083ff] pb-1 text-sm font-medium" href="#">Dashboard</a>
+<a class="text-[#c7c4d7] hover:text-[#8083ff] transition-colors text-sm font-medium" href="/qr-decode">QR Decode</a>
+<a class="text-[#c7c4d7] hover:text-[#8083ff] transition-colors text-sm font-medium" href="#" data-soon>Forensics</a>
+<a class="text-[#c7c4d7] hover:text-[#8083ff] transition-colors text-sm font-medium" href="#" data-soon>Archive</a>
+<a class="text-[#c7c4d7] hover:text-[#8083ff] transition-colors text-sm font-medium" href="#" data-soon>Network</a>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-[#c7c4d7] hover:bg-[#1c1f29] transition-all duration-300 p-2 rounded-lg active:scale-95 duration-200" data-soon>security</button>
+<button class="material-symbols-outlined text-[#c7c4d7] hover:bg-[#1c1f29] transition-all duration-300 p-2 rounded-lg active:scale-95 duration-200" data-soon>history</button>
+<button class="material-symbols-outlined text-[#c7c4d7] hover:bg-[#1c1f29] transition-all duration-300 p-2 rounded-lg active:scale-95 duration-200" data-soon>settings</button>
+<div class="h-8 w-8 rounded-full overflow-hidden border border-white/10 ml-2">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="close-up portrait of a professional male system administrator with a focused expression in a dimly lit high-tech environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_6_fSfUddRuXweDm5R77FHmELXJBkbucKqKseiwrNeJ1-U1lENxnhVcOri7nBVeaqqfAtW4IpTnuPkNZj8dIM2rP0WOWwWTRaocgEcjDOixi3iFzkBsjNYpchZ7_htSziCraBWGYCgT9uQ-HR5_zX8GqO19Db14Z6kIXXGw7UNxw13EU4cJ37UB_xVKhLhG-4N-nEzCJS3TlQHvACBunBg4zDMAT-Imw4SE-Li0ahLKuBTmT7O-klFv8OgYWy9_eKD9x0TonVPpOg"/>
+</div>
+</div>
+</header>
+<main class="flex flex-1 overflow-hidden" style="height:calc(100vh - 72px)">
+<!-- SideNavBar (Hidden on small screens) -->
+<aside class="bg-[#181b25] dark:bg-[#181b25] h-full w-64 border-r border-white/[0.06] flex flex-col py-8 hidden lg:flex" style="flex-shrink:0;overflow-y:auto;">
+<div class="px-6 mb-8">
+<div class="text-lg font-black text-[#8083ff] tracking-tighter">VeriSphere</div>
+<div class="text-[10px] text-[#c7c4d7] uppercase tracking-widest font-bold opacity-60 mt-1">Aadhaar Verification</div>
+</div>
+<nav class="flex-1">
+<div class="bg-gradient-to-r from-[#8083ff]/10 to-transparent text-[#8083ff] border-l-4 border-[#8083ff] px-6 py-3 flex items-center gap-3 font-['Inter'] text-sm font-medium tracking-wide">
+<span class="material-symbols-outlined">grid_view</span>
+<span>Dashboard</span>
+</div>
+<a href="/qr-decode" class="text-[#c7c4d7] px-6 py-3 hover:bg-white/[0.02] hover:text-[#8083ff] transition-all flex items-center gap-3 font-['Inter'] text-sm font-medium tracking-wide">
+<span class="material-symbols-outlined">qr_code_scanner</span>
+<span>QR Decode</span>
+</a>
+<div class="text-[#c7c4d7] px-6 py-3 hover:bg-white/[0.02] hover:text-[#8083ff] transition-all flex items-center gap-3 font-['Inter'] text-sm font-medium tracking-wide cursor-pointer" data-soon>
+<span class="material-symbols-outlined">smart_card_reader</span>
+<span>Forensics</span>
+</div>
+<div class="text-[#c7c4d7] px-6 py-3 hover:bg-white/[0.02] hover:text-[#8083ff] transition-all flex items-center gap-3 font-['Inter'] text-sm font-medium tracking-wide cursor-pointer" data-soon>
+<span class="material-symbols-outlined">inventory_2</span>
+<span>Archive</span>
+</div>
+<div class="text-[#c7c4d7] px-6 py-3 hover:bg-white/[0.02] hover:text-[#8083ff] transition-all flex items-center gap-3 font-['Inter'] text-sm font-medium tracking-wide cursor-pointer" data-soon>
+<span class="material-symbols-outlined">hub</span>
+<span>Network</span>
+</div>
+<div class="text-[#c7c4d7] px-6 py-3 hover:bg-white/[0.02] hover:text-[#8083ff] transition-all flex items-center gap-3 font-['Inter'] text-sm font-medium tracking-wide cursor-pointer" data-soon>
+<span class="material-symbols-outlined">shield</span>
+<span>Security</span>
+</div>
+</nav>
+<div class="px-6 mt-auto">
+<button onclick="window.location.reload()" class="w-full bg-gradient-to-r from-[#8083ff] to-[#571bc1] text-white font-bold py-3 rounded-xl active:scale-95 transition-all shadow-[0_0_20px_rgba(128,131,255,0.2)] cursor-pointer">
+                    New Analysis
+                </button>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<section class="flex-1 overflow-y-auto bg-[#10131c] p-4">
+<div class="w-full grid grid-cols-1 xl:grid-cols-12 gap-6 h-full">
+<!-- Left Column (Upload Panel) -->
+<div class="xl:col-span-5 flex flex-col gap-4">
+<div class="flex justify-between items-end pb-4 border-b border-white/[0.06]">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="text-2xl">🛡️</span>
+<h1 class="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-[#8083ff] to-[#571bc1] tracking-tight">Aadhaar Fraud Detection</h1>
+</div>
+<p class="text-xs text-on-surface-variant font-medium uppercase tracking-widest opacity-60">System Ready for Scan</p>
+</div>
+<div class="text-[10px] text-on-surface-variant font-mono text-right hidden md:block">
+                            YOLOv8 · EasyOCR · Verhoeff · QR · Forensics
+                        </div>
+</div>
+<!-- Upload Zone -->
+<div class="glass-card rounded-xl p-8 border-2 border-dashed border-[#8083ff]/30 flex flex-col items-center justify-center text-center group hover:border-[#8083ff]/60 transition-all cursor-pointer">
+<div class="w-16 h-16 rounded-full bg-surface-container-highest flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+<span class="material-symbols-outlined text-[#8083ff] text-3xl">cloud_upload</span>
+</div>
+<h3 class="text-lg font-bold mb-2">Drop your Aadhaar Card here</h3>
+<p class="text-sm text-on-surface-variant mb-4">Supports JPG, PNG, or WEBP (Max 10MB)</p>
+<div class="flex gap-2">
+<span class="px-3 py-1 bg-surface-container-low text-[10px] font-bold tracking-tighter rounded border border-white/5 uppercase">Front Side</span>
+<span class="px-3 py-1 bg-surface-container-low text-[10px] font-bold tracking-tighter rounded border border-white/5 uppercase">Back Side</span>
+</div>
+</div>
+<!-- Image Preview Placeholder -->
+<div class="glass-card rounded-xl aspect-[1.58/1] flex items-center justify-center relative group">
+<div class="absolute inset-0 bg-gradient-to-br from-primary-container/5 to-transparent"></div>
+<div class="flex flex-col items-center opacity-40 group-hover:opacity-60 transition-opacity">
+<span class="material-symbols-outlined text-5xl mb-2">image</span>
+<p class="text-xs uppercase tracking-[0.2em] font-bold">Waiting for preview</p>
+</div>
+<!-- Faint grid lines overlay -->
+<div class="absolute inset-0 opacity-[0.03] pointer-events-none" style="background-image: linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px); background-size: 20px 20px;"></div>
+</div>
+<!-- Analyze Button -->
+<button class="w-full py-5 rounded-xl bg-surface-container-highest text-on-surface-variant font-black text-lg flex items-center justify-center gap-3 cursor-not-allowed opacity-50 border border-white/5" disabled="">
+<span class="material-symbols-outlined">search</span>
+                        Analyze Card
+                    </button>
+<!-- Info Card: Pipeline -->
+<div class="glass-card rounded-xl p-6">
+<h4 class="text-xs font-black uppercase tracking-widest text-on-surface-variant mb-6 border-b border-white/5 pb-2">Analysis Pipeline</h4>
+<div class="space-y-6">
+<div class="flex gap-4">
+<div class="w-1.5 h-12 bg-[#8083ff] rounded-full shadow-[0_0_8px_#8083ff]"></div>
+<div>
+<p class="text-xs font-bold text-[#8083ff] uppercase mb-1 tracking-wider">YOLOv8 Detection</p>
+<p class="text-xs text-on-surface-variant leading-relaxed">Spatial analysis to locate ID card boundaries and orientation.</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="w-1.5 h-12 bg-[#60a5fa] rounded-full shadow-[0_0_8px_#60a5fa]"></div>
+<div>
+<p class="text-xs font-bold text-[#60a5fa] uppercase mb-1 tracking-wider">EasyOCR Text Extraction</p>
+<p class="text-xs text-on-surface-variant leading-relaxed">Neural network extraction of demographic data and card ID.</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="w-1.5 h-12 bg-[#4ade80] rounded-full shadow-[0_0_8px_#4ade80]"></div>
+<div>
+<p class="text-xs font-bold text-[#4ade80] uppercase mb-1 tracking-wider">Verhoeff Algorithm</p>
+<p class="text-xs text-on-surface-variant leading-relaxed">Mathematical checksum validation of the 12-digit Aadhaar number.</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="w-1.5 h-12 bg-[#facc15] rounded-full shadow-[0_0_8px_#facc15]"></div>
+<div>
+<p class="text-xs font-bold text-[#facc15] uppercase mb-1 tracking-wider">QR Cross-Check</p>
+<p class="text-xs text-on-surface-variant leading-relaxed">Comparison between OCR extracted data and embedded QR code data.</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="w-1.5 h-12 bg-[#f87171] rounded-full shadow-[0_0_8px_#f87171]"></div>
+<div>
+<p class="text-xs font-bold text-[#f87171] uppercase mb-1 tracking-wider">Deep Forensics</p>
+<p class="text-xs text-on-surface-variant leading-relaxed">Pixel-level scrutiny for manipulation, cloned photos, or font mismatches.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column (Results Panel - Initial State) -->
+<div class="xl:col-span-7 flex flex-col" style="min-height:calc(100vh - 160px)">
+<div class="glass-card rounded-xl flex-1 flex flex-col items-center justify-center p-12 text-center border-white/[0.04]">
+<div class="relative mb-8">
+<!-- Background glow for the icon -->
+<div class="absolute inset-0 bg-[#8083ff]/10 blur-[60px] rounded-full"></div>
+<span class="material-symbols-outlined text-[120px] text-[#8083ff]/20 relative z-10" style="font-variation-settings: 'wght' 200;">shield_with_heart</span>
+</div>
+<h2 class="text-3xl font-black mb-4 tracking-tight">System Idle</h2>
+<p class="text-on-surface-variant max-w-md mx-auto leading-relaxed mb-10">
+                            Upload a card image to begin the multi-stage cryptographic and forensic verification process. Our AI will analyze security features and metadata in real-time.
+                        </p>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-2xl">
+<div class="bg-surface-container-low p-6 rounded-xl border border-white/5 flex flex-col items-center">
+<span class="material-symbols-outlined text-[#8083ff] mb-2">speed</span>
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">Avg Time</span>
+<span class="text-lg font-black mt-1">1.2s</span>
+</div>
+<div class="bg-surface-container-low p-6 rounded-xl border border-white/5 flex flex-col items-center">
+<span class="material-symbols-outlined text-[#8083ff] mb-2">verified</span>
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">Confidence</span>
+<span class="text-lg font-black mt-1">99.8%</span>
+</div>
+<div class="bg-surface-container-low p-6 rounded-xl border border-white/5 flex flex-col items-center">
+<span class="material-symbols-outlined text-[#8083ff] mb-2">query_stats</span>
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">Database</span>
+<span class="text-lg font-black mt-1">Local</span>
+</div>
+</div>
+</div>
+<!-- Footer Metadata -->
+<div class="mt-6 flex justify-between items-center px-4">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-[#4ade80] animate-pulse shadow-[0_0_8px_#4ade80]"></div>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Core Engine Online</span>
+</div>
+<span class="text-[10px] font-mono text-on-surface-variant opacity-40">SOVEREIGN_SENTINEL_BUILD_88.42</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-[#10131c] px-6 py-4 flex justify-between items-center border-t border-white/10 z-50">
+<button class="flex flex-col items-center gap-1 text-[#8083ff]">
+<span class="material-symbols-outlined">grid_view</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter">Dash</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-[#c7c4d7]">
+<span class="material-symbols-outlined">smart_card_reader</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter">Scan</span>
+</button>
+<div class="relative -top-6">
+<button class="bg-gradient-to-r from-[#8083ff] to-[#571bc1] w-14 h-14 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(128,131,255,0.4)] border-4 border-[#10131c]">
+<span class="material-symbols-outlined text-white text-3xl">add</span>
+</button>
+</div>
+<button class="flex flex-col items-center gap-1 text-[#c7c4d7]">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter">Vault</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-[#c7c4d7]">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter">Set</span>
+</button>
+</nav>
+</body></html>"""
 
 
 @app.route("/")
