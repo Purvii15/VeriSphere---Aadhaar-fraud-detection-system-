@@ -23,9 +23,5 @@ temp_upload.jpg
 aadhaar_dataset/
 roboflow_dataset/
 
-# Model weights (large files)
-*.pt
-*.pth
-
 # EasyOCR cache
 .EasyOCR/
