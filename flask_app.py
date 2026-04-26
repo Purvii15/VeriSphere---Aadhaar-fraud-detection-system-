@@ -1,8 +1,6 @@
 """
-ngrok http 5000
-py flask_app.py
-Flask web server for Aadhaar Fraud Detection
-Serves the Stitch HTML frontend and exposes /analyze API endpoint.
+Flask web server for Aadhaar Fraud Detection — VeriSphere
+Serves the frontend and exposes /analyze and /chat API endpoints.
 """
 import os
 import base64
@@ -11,9 +9,48 @@ import numpy as np
 from pathlib import Path
 from flask import Flask, request, jsonify, render_template_string
 
+# Load .env file if present
+def _load_env():
+    env_path = Path(__file__).parent / ".env"
+    if env_path.exists():
+        for line in env_path.read_text().splitlines():
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                k, v = line.split("=", 1)
+                os.environ.setdefault(k.strip(), v.strip())
+_load_env()
+
 from aadhaar_pipeline.pipeline import run_pipeline
 from aadhaar_pipeline.detector import load_model
 from aadhaar_pipeline.tampering import load_tampering_model
+
+# ── AI setup — Gemini primary, Google Gemma (HF) fallback ─────────────────────
+from google import genai as google_genai
+
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+HF_TOKEN       = os.environ.get("HF_TOKEN", "")
+_gemini_client = None
+
+def get_gemini():
+    global _gemini_client
+    if _gemini_client is None and GEMINI_API_KEY:
+        _gemini_client = google_genai.Client(api_key=GEMINI_API_KEY)
+    return _gemini_client
+
+def _call_gemma_hf(prompt: str) -> str:
+    """Call a free HF model via Serverless Inference API (no billing, no token needed)."""
+    from huggingface_hub import InferenceClient
+    # Use chat_completion API — more reliable across HF providers
+    client = InferenceClient(
+        model="meta-llama/Llama-3.2-1B-Instruct",
+        token=HF_TOKEN or None
+    )
+    response = client.chat_completion(
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=512,
+        temperature=0.7,
+    )
+    return response.choices[0].message.content or "No response generated."
 
 # Base directory = folder where flask_app.py lives
 BASE_DIR = Path(__file__).parent
@@ -209,6 +246,9 @@ _MAIN_HTML = """<!DOCTYPE html>
 <button onclick="window.location.reload()" class="w-full bg-gradient-to-r from-[#8083ff] to-[#571bc1] text-white font-bold py-3 rounded-xl active:scale-95 transition-all shadow-[0_0_20px_rgba(128,131,255,0.2)] cursor-pointer">
                     New Analysis
                 </button>
+<button onclick="toggleChat()" class="w-full mt-3 border border-[#8083ff]/40 text-[#8083ff] font-bold py-3 rounded-xl active:scale-95 transition-all hover:bg-[#8083ff]/10 cursor-pointer text-sm">
+                    ✨ Ask Gemini AI
+                </button>
 </div>
 </aside>
 <!-- Main Content Canvas -->
@@ -363,6 +403,109 @@ _MAIN_HTML = """<!DOCTYPE html>
 <span class="text-[10px] font-bold uppercase tracking-tighter">Set</span>
 </button>
 </nav>
+
+<!-- ✨ Gemini AI Chat Widget -->
+<div id="_chat_fab" onclick="toggleChat()"
+  style="position:fixed;bottom:24px;right:24px;z-index:1000;width:56px;height:56px;border-radius:50%;
+         background:linear-gradient(135deg,#8083ff,#571bc1);cursor:pointer;
+         display:flex;align-items:center;justify-content:center;
+         box-shadow:0 4px 24px rgba(128,131,255,0.5);transition:transform 0.2s"
+  onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+  <span style="font-size:1.5rem">✨</span>
+</div>
+
+<div id="_chat_panel"
+  style="display:none;position:fixed;bottom:92px;right:24px;z-index:999;width:360px;
+         background:#10131c;border:1px solid rgba(128,131,255,0.3);border-radius:16px;
+         box-shadow:0 8px 40px rgba(0,0,0,0.6);overflow:hidden;flex-direction:column">
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#8083ff22,#571bc122);padding:14px 16px;
+              border-bottom:1px solid rgba(128,131,255,0.2);display:flex;align-items:center;justify-content:space-between">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="font-size:1.3rem">✨</span>
+      <div>
+        <div style="font-weight:800;font-size:14px;color:#e0e2ef">VeriSphere AI</div>
+        <div style="font-size:10px;color:#8083ff;font-weight:600">Powered by Gemini 1.5 Flash</div>
+      </div>
+    </div>
+    <button onclick="toggleChat()" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:18px;line-height:1">✕</button>
+  </div>
+  <!-- Messages -->
+  <div id="_chat_msgs"
+    style="height:300px;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth">
+    <div style="background:rgba(128,131,255,0.1);border-radius:12px 12px 12px 4px;padding:10px 14px;max-width:85%">
+      <p style="font-size:13px;color:#e0e2ef;margin:0">Hi! I'm your Gemini AI assistant. Ask me anything about fraud detection results, Aadhaar verification, or enrollment statistics.</p>
+    </div>
+  </div>
+  <!-- Input -->
+  <div style="padding:12px;border-top:1px solid rgba(255,255,255,0.06);display:flex;gap:8px">
+    <input id="_chat_input" type="text" placeholder="Ask about fraud results..."
+      style="flex:1;background:#1c1f29;border:1px solid rgba(128,131,255,0.3);border-radius:10px;
+             padding:9px 12px;font-size:13px;color:#e0e2ef;outline:none"
+      onkeydown="if(event.key==='Enter')sendChat()" />
+    <button onclick="sendChat()"
+      style="background:linear-gradient(135deg,#8083ff,#571bc1);border:none;border-radius:10px;
+             padding:9px 14px;color:white;font-weight:700;cursor:pointer;font-size:13px">
+      Send
+    </button>
+  </div>
+</div>
+
+<script>
+function toggleChat() {
+  const p = document.getElementById('_chat_panel');
+  p.style.display = p.style.display === 'none' ? 'flex' : 'none';
+  if (p.style.display === 'flex') document.getElementById('_chat_input').focus();
+}
+
+async function sendChat() {
+  const input = document.getElementById('_chat_input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+
+  const msgs = document.getElementById('_chat_msgs');
+
+  // User bubble
+  msgs.innerHTML += `
+    <div style="background:rgba(128,131,255,0.2);border-radius:12px 12px 4px 12px;padding:10px 14px;max-width:85%;align-self:flex-end;margin-left:auto">
+      <p style="font-size:13px;color:#e0e2ef;margin:0">${msg}</p>
+    </div>`;
+
+  // Typing indicator
+  const typingId = '_typing_' + Date.now();
+  msgs.innerHTML += `
+    <div id="${typingId}" style="background:rgba(128,131,255,0.08);border-radius:12px 12px 12px 4px;padding:10px 14px;max-width:60%">
+      <p style="font-size:13px;color:#9ca3af;margin:0">✨ Thinking...</p>
+    </div>`;
+  msgs.scrollTop = msgs.scrollHeight;
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ message: msg })
+    });
+    const data = await res.json();
+    document.getElementById(typingId)?.remove();
+
+    const reply = data.reply || data.error || 'Something went wrong.';
+    const modelTag = data.model ? `<span style="font-size:9px;color:#8083ff;font-weight:700;display:block;margin-bottom:4px">✨ ${data.model}</span>` : '';
+    msgs.innerHTML += `
+      <div style="background:rgba(128,131,255,0.08);border-radius:12px 12px 12px 4px;padding:10px 14px;max-width:85%">
+        ${modelTag}
+        <p style="font-size:13px;color:#e0e2ef;margin:0;white-space:pre-wrap">${reply}</p>
+      </div>`;
+  } catch(e) {
+    document.getElementById(typingId)?.remove();
+    msgs.innerHTML += `
+      <div style="background:rgba(248,113,113,0.1);border-radius:12px;padding:10px 14px;max-width:85%">
+        <p style="font-size:13px;color:#f87171;margin:0">Error: ${e}</p>
+      </div>`;
+  }
+  msgs.scrollTop = msgs.scrollHeight;
+}
+</script>
 </body></html>"""
 
 
@@ -497,6 +640,7 @@ def analyze():
         # make result JSON-serialisable
         result.pop("qr_fields", None)
         result = _make_serialisable(result)
+        
         return jsonify(result)
 
     except Exception as e:
@@ -1278,5 +1422,51 @@ def _get_glue_js():
 """
 
 
+@app.route("/api/chat", methods=["POST"])
+def chat():
+    """AI assistant — Gemini primary, Google Gemma (HF) fallback."""
+    data = request.get_json() or {}
+    user_msg = data.get("message", "").strip()
+    context  = data.get("context", "")
+
+    if not user_msg:
+        return jsonify({"error": "No message provided"}), 400
+
+    system = (
+        "You are VeriSphere AI, an expert assistant for an Aadhaar card fraud detection system. "
+        "Help users understand fraud detection results, Verhoeff checksum, QR cross-verification, "
+        "tampering detection, and photo matching. "
+        + (f"Last analysis context: {context}. " if context else "") +
+        "Be concise and accurate. Politely redirect off-topic questions."
+    )
+    full_prompt = f"{system}\n\nUser: {user_msg}\nAssistant:"
+
+    # ── 1. Try Gemini ──────────────────────────────────────────────────────────
+    client = get_gemini()
+    if client:
+        try:
+            resp = client.models.generate_content(
+                model="gemini-2.0-flash-lite",
+                contents=full_prompt
+            )
+            return jsonify({"reply": resp.text, "model": "Gemini 2.0 Flash"})
+        except Exception as e:
+            err = str(e)
+            # Fall through to HF on quota/rate errors
+            if "429" not in err and "RESOURCE_EXHAUSTED" not in err:
+                return jsonify({"error": err}), 500
+            print(f"Gemini quota hit, falling back to Gemma HF: {err[:80]}")
+
+    # ── 2. Fallback — Google Gemma 2 via HF Inference API ─────────────────────
+    if not HF_TOKEN and not GEMINI_API_KEY:
+        return jsonify({"error": "No AI API key configured. Set GEMINI_API_KEY or HF_TOKEN."}), 503
+    try:
+        reply = _call_gemma_hf(full_prompt)
+        return jsonify({"reply": reply, "model": "Llama 3.2 (HF Free)"})
+    except Exception as e:
+        return jsonify({"error": f"Both Gemini and Gemma failed: {e}"}), 500
+
+
 if __name__ == "__main__":
-    app.run(debug=False, port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(debug=False, host="0.0.0.0", port=port)

@@ -10,10 +10,15 @@ __pycache__/
 venv/
 env/
 
-
 # Temp files
 temp_upload.jpg
 *.log
+
+# Analytics database (contains analysis results)
+analytics.db
+
+# Secrets
+.env
 
 # IDE
 .idea/
