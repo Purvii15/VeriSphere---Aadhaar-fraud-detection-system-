@@ -1,8 +1,12 @@
 import cv2
 import numpy as np
 import pathlib
-temp = pathlib.PosixPath
-pathlib.PosixPath = pathlib.WindowsPath
+import platform
+
+# Handle model loading across OS (Windows-saved models on Linux)
+if platform.system() != 'Windows':
+    pathlib.WindowsPath = pathlib.PosixPath
+
 from ultralytics import YOLO
 
 # these match the class IDs in our data.yaml
